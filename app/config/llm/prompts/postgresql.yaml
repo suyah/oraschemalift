@@ -1,0 +1,106 @@
+metadata:
+  name: "postgresql_sql"
+  version: "1.2"
+  description: "Provides PostgreSQL-specific instructions for SQL generation, including advanced table DDL attributes."
+
+system: |
+  General PostgreSQL Rules:
+  - Ensure all generated SQL is compatible with PostgreSQL 12+ syntax.
+  - Use PostgreSQL-specific data types as provided in the DATA_TYPES section. Favor common types like TEXT, VARCHAR, INTEGER, BIGINT, NUMERIC, TIMESTAMP WITH TIME ZONE, BOOLEAN.
+  - Adhere to PostgreSQL naming conventions (lowercase preferred for identifiers, max 63 characters). Always quote identifiers if they contain special characters or match keywords, though prefer unquoted if possible.
+
+  Table Rules:
+  - Use `SERIAL` or `BIGSERIAL` for auto-incrementing primary keys where appropriate.
+  - Consider using `TEXT` for variable-length strings unless a specific limit is truly necessary for domain integrity.
+  - **Foreign Key Constraints with Composite Primary Keys:**
+    - If a child table defines a foreign key to a parent table that has a composite primary key (e.g., `PRIMARY KEY (parent_colA, parent_colB)`), the child table MUST include columns that correspond to `parent_colA` and `parent_colB`.
+    - The foreign key constraint in the child table MUST then reference all corresponding columns: `FOREIGN KEY (child_colA_maps_to_parent_colA, child_colB_maps_to_parent_colB) REFERENCES parent_table (parent_colA, parent_colB)`.
+    - This is especially critical if one of the parent's primary key columns is also a partitioning key (e.g., `order_date` in an `orders` table partitioned by `order_date`). The child table (e.g., `order_items`) must also have an `order_date` column (or a similarly purposed column) to be part of the foreign key reference.
+  - **Self-Referencing Foreign Keys (e.g., Employee-Manager):** If a table needs to reference itself (e.g., an `employees` table with a `manager_id` column that is a foreign key to `employees.employee_id`), ensure the `manager_id` column is defined (e.g., as `INTEGER`) and the foreign key constraint is correctly established: `FOREIGN KEY (manager_id) REFERENCES employees (employee_id)`. This `manager_id` column should allow `NULL` values if a top-level entity (e.g., CEO) has no manager.
+  - For at least 2-3 tables, include the following advanced features:
+    - `PARTITION BY RANGE (column_name)` or `PARTITION BY LIST (column_name)`: Include example partitions. **If a table is partitioned, any PRIMARY KEY or UNIQUE constraint on it MUST include all the partitioning columns.** For example, if `PARTITION BY RANGE (order_date)` is used, the primary key must include `order_date`.
+    - `TABLESPACE tablespace_name`: Use a placeholder like `your_custom_tablespace` if a specific one isn't defined.
+    - `WITH (FILLFACTOR = integer)`: e.g., `WITH (FILLFACTOR = 70)` for tables with frequent updates.
+    - `INHERITS (parent_table)`: Demonstrate table inheritance for one pair of tables if logical for the schema.
+    - Add `COMMENT ON TABLE ... IS '...'` and `COMMENT ON COLUMN ... IS '...'` for clarity on a few tables and key columns.
+  - Example Table with Advanced Features:
+    CREATE TABLE orders (
+      order_id BIGSERIAL NOT NULL,
+      customer_id INTEGER NOT NULL,
+      order_date DATE NOT NULL DEFAULT CURRENT_DATE,
+      order_status VARCHAR(20) CHECK (order_status IN ('PENDING', 'SHIPPED', 'DELIVERED', 'CANCELLED')),
+      total_amount NUMERIC(10,2),
+      PRIMARY KEY (order_id, order_date) -- Example composite PK for partitioning
+    )
+    PARTITION BY RANGE (order_date)
+    WITH (FILLFACTOR = 80);
+    COMMENT ON TABLE orders IS 'Stores customer order information, partitioned by order_date.';
+    COMMENT ON COLUMN orders.order_status IS 'Current status of the order.';
+
+    -- Example of a child table referencing the composite PK of the 'orders' table:
+    CREATE TABLE order_items (
+      order_item_id SERIAL PRIMARY KEY,
+      order_id BIGINT NOT NULL, -- Corresponds to orders.order_id
+      order_date DATE NOT NULL, -- Corresponds to orders.order_date, ESSENTIAL for FK to partitioned table
+      product_id INTEGER NOT NULL,
+      quantity INTEGER NOT NULL,
+      unit_price NUMERIC(10, 2) NOT NULL,
+      FOREIGN KEY (order_id, order_date) REFERENCES orders (order_id, order_date)
+    );
+
+    -- Example Partition (actual partition DDL is separate in PostgreSQL)
+    -- CREATE TABLE orders_2023_q1 PARTITION OF orders
+    -- FOR VALUES FROM ('2023-01-01') TO ('2023-04-01');
+
+  Function and Procedure Rules:
+  - Use `CREATE OR REPLACE FUNCTION` or `CREATE OR REPLACE PROCEDURE`.
+  - Specify the language, typically `PLPGSQL` for procedural code or `SQL` for simpler functions.
+  - Define `RETURNS` type for functions correctly (e.g., `RETURNS TABLE(...)`, `RETURNS SETOF record`, `RETURNS integer`, `RETURNS VOID` for procedures if not using `OUT` parameters).
+  - Use `AS $$ BEGIN ... END; $$` for the body of PLPGSQL functions/procedures.
+  - **IMPORTANT FOR PL/pgSQL body:** The `BEGIN ... END;` block MUST contain at least one valid SQL or PL/pgSQL statement. If the intended logic is complex or not fully defined by the task, the SOLE statement inside the `BEGIN...END;` block should be EITHER `NULL;` OR `RAISE NOTICE 'Procedure/Function [name] body to be implemented.';`. Do NOT add any other comments or statements within the `BEGIN...END;` block if using these placeholders. DO NOT generate empty `BEGIN...END;` blocks.
+  - Ensure all function and procedure logic is self-contained and does not rely on external extensions not typically available or enabled by default unless specified.
+  - Ensure that all tables referenced in functions and procedures are created first.
+  - Example PL/pgSQL Function:
+    CREATE OR REPLACE FUNCTION get_user_count()
+    RETURNS INTEGER
+    LANGUAGE PLPGSQL
+    AS $$
+    BEGIN
+      RETURN (SELECT COUNT(*) FROM example_users); -- Assumes example_users table exists
+    END;
+    $$;
+  - Example SQL Function:
+    CREATE OR REPLACE FUNCTION add_numbers(a INTEGER, b INTEGER)
+    RETURNS INTEGER
+    LANGUAGE SQL
+    AS $$
+    SELECT a + b;
+    $$;
+  - Example Procedure (PostgreSQL 11+):
+    CREATE OR REPLACE PROCEDURE archive_old_users(archive_date TIMESTAMP WITH TIME ZONE)
+    LANGUAGE PLPGSQL
+    AS $$
+    BEGIN
+      -- Hypothetical: move users created before archive_date to an archive table
+      -- INSERT INTO archived_users SELECT * FROM example_users WHERE created_at < archive_date;
+      -- DELETE FROM example_users WHERE created_at < archive_date;
+      RAISE NOTICE 'Archiving process for users before % completed. User count: (SELECT COUNT(*) FROM example_users WHERE created_at < archive_date).'; -- Modified for validity
+    END;
+    $$;
+
+  Index Rules:
+  - Use standard PostgreSQL index types. `CREATE INDEX ON table (column);` is standard.
+  - Consider GIN or GiST indexes for specific data types (e.g., full-text search, geometric types) if they arise in the schema.
+  - Example Index:
+    CREATE INDEX idx_users_email ON example_users (email);
+
+  Task/Scheduling Rules (Simulated via Procedures):
+  - Tasks are not a native PostgreSQL concept like in Snowflake. 
+  - Generate 5 stored procedures designed to be called by a scheduler (e.g., pg_cron or an external scheduler).
+  - These procedures should encapsulate the business logic described in the `common.yaml` prompt for "Tasks" (e.g., calculate store metrics, process customer segmentation).
+  - Ensure these procedures are `CREATE OR REPLACE PROCEDURE` and written in `PLPGSQL`.
+
+  Referenced Documentation (for complex cases or further details):
+  - PostgreSQL CREATE FUNCTION: https://www.postgresql.org/docs/current/sql-createfunction.html
+  - PostgreSQL CREATE PROCEDURE: https://www.postgresql.org/docs/current/sql-createprocedure.html
+  - PostgreSQL Data Types: https://www.postgresql.org/docs/current/datatype.html 

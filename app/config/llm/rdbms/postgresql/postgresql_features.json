@@ -1,0 +1,76 @@
+{
+  "dialect_name": "PostgreSQL",
+  "version_info_query": "SELECT version();",
+  "documentation_link": "https://www.postgresql.org/docs/current/index.html",
+  "naming_conventions": {
+    "max_identifier_length": 63,
+    "case_sensitivity": "Preserves case for quoted identifiers, otherwise lowercases. Keywords are case-insensitive.",
+    "allowed_characters": "Letters, numbers, underscores. Quoted identifiers can include other characters.",
+    "table_naming": "schema_name.table_name (if schema specified, defaults to 'public')",
+    "column_naming": "Typically snake_case."
+  },
+  "supported_objects": {
+    "tables": {
+      "creatable": true,
+      "notes": "Supports regular tables, temporary tables, unlogged tables, partitioned tables, and table inheritance."
+    },
+    "views": {
+      "creatable": true,
+      "notes": "Standard SQL views, materialized views, recursive views."
+    },
+    "indexes": {
+      "creatable": true,
+      "notes": "B-tree, Hash, GiST, SP-GiST, GIN, BRIN. Supports partial, expression, and concurrent index creation."
+    },
+    "sequences": {
+      "creatable": true,
+      "notes": "Standard SQL sequences. IDENTITY columns also available."
+    },
+    "functions": {
+      "creatable": true,
+      "notes": "Supports PL/pgSQL, PL/Tcl, PL/Perl, PL/Python, SQL functions. Window functions are powerful."
+    },
+    "procedures": {
+      "creatable": true,
+      "notes": "Supported since PostgreSQL 11. Uses PL/pgSQL or other procedural languages."
+    },
+    "triggers": {
+      "creatable": true,
+      "notes": "Row-level and statement-level triggers. Event triggers also available."
+    },
+    "schemas": {
+      "creatable": true,
+      "notes": "Namespace for database objects."
+    },
+    "domains": {
+      "creatable": true,
+      "notes": "User-defined data types with constraints."
+    },
+    "extensions": {
+      "creatable": true,
+      "notes": "Modular packages to extend functionality (e.g., PostGIS, hstore)."
+    }
+  },
+  "feature_syntax_examples": {
+    "create_table_with_identity": "CREATE TABLE users (user_id INT GENERATED ALWAYS AS IDENTITY, username VARCHAR(50) UNIQUE);",
+    "create_partitioned_table_list": "CREATE TABLE measurement (city_id INT NOT NULL, logdate DATE NOT NULL, peaktemp INT, unitsales INT) PARTITION BY LIST (city_id); CREATE TABLE measurement_london PARTITION OF measurement FOR VALUES IN (1);",
+    "create_partitioned_table_range": "CREATE TABLE orders (order_id BIGSERIAL PRIMARY KEY, order_date DATE NOT NULL, customer_id INT) PARTITION BY RANGE (order_date); CREATE TABLE orders_y2023m01 PARTITION OF orders FOR VALUES FROM ('2023-01-01') TO ('2023-02-01');",
+    "create_function_plpgsql": "CREATE OR REPLACE FUNCTION add(a INTEGER, b INTEGER) RETURNS INTEGER AS $$ BEGIN RETURN a + b; END; $$ LANGUAGE plpgsql;",
+    "create_trigger_function": "CREATE OR REPLACE FUNCTION log_last_name_changes() RETURNS TRIGGER AS $$ BEGIN IF NEW.last_name <> OLD.last_name THEN INSERT INTO employee_audit(emp_id, last_name_old, last_name_new, change_date) VALUES (OLD.id, OLD.last_name, NEW.last_name, now()); END IF; RETURN NEW; END; $$ LANGUAGE plpgsql; CREATE TRIGGER last_name_changes BEFORE UPDATE ON employees FOR EACH ROW EXECUTE FUNCTION log_last_name_changes();",
+    "create_extension": "CREATE EXTENSION IF NOT EXISTS \"uuid-ossp\";"
+  },
+  "keywords_to_include_in_generation": [
+    "GENERATED ALWAYS AS IDENTITY",
+    "PARTITION BY LIST",
+    "PARTITION BY RANGE",
+    "PARTITION OF",
+    "LANGUAGE plpgsql",
+    "CREATE EXTENSION"
+  ],
+  "data_type_notes": {
+    "TEXT": "Preferred over VARCHAR without length for unlimited string storage.",
+    "JSONB": "Generally preferred over JSON for storage and indexing efficiency.",
+    "UUID": "Native UUID type available, often used with extensions like uuid-ossp.",
+    "ARRAY": "PostgreSQL has strong support for array types for any built-in or user-defined data type."
+  }
+} 

@@ -1,0 +1,69 @@
+{
+  "dialect_name": "GoogleBigQuery",
+  "version_info_query": "SELECT @@version;",
+  "documentation_link": "https://cloud.google.com/bigquery/docs/reference/standard-sql/",
+  "naming_conventions": {
+    "max_identifier_length": 1024,
+    "case_sensitivity": "Case-sensitive for identifiers (datasets, tables, columns). Keywords are case-insensitive.",
+    "allowed_characters": "Letters, numbers, and underscores. Must start with a letter or underscore. Backticks (`) for special characters or reserved words.",
+    "dataset_naming": "project_id.dataset_id",
+    "table_naming": "project_id.dataset_id.table_id or dataset_id.table_id"
+  },
+  "supported_objects": {
+    "tables": {
+      "creatable": true,
+      "notes": "Supports temporary, external, and snapshot tables. Partitioning and clustering are key for optimization."
+    },
+    "views": {
+      "creatable": true,
+      "notes": "Supports standard views and materialized views."
+    },
+    "materialized_views": {
+      "creatable": true,
+      "notes": "Automatically refresh and cache query results for improved performance."
+    },
+    "functions": {
+      "creatable": true,
+      "notes": "Supports SQL UDFs (User-Defined Functions) and JavaScript UDFs."
+    },
+    "procedures": {
+      "creatable": true,
+      "notes": "Supports multi-statement stored procedures using procedural language statements."
+    }
+  },
+  "feature_syntax_examples": {
+    "create_table_simple": "CREATE TABLE my_dataset.my_table (column_name STRING, another_column INT64);",
+    "create_table_with_partitioning": "CREATE TABLE my_dataset.partitioned_table (id STRING, data STRING, event_date DATE) PARTITION BY event_date OPTIONS(description='A table partitioned by event_date');",
+    "create_table_with_clustering": "CREATE TABLE my_dataset.clustered_table (customer_id STRING, product_id STRING, purchase_timestamp TIMESTAMP) CLUSTER BY customer_id, product_id OPTIONS(description='A table clustered by customer and product');",
+    "create_table_with_partition_and_cluster": "CREATE TABLE my_dataset.complex_table (order_id STRING, order_date DATE, region STRING, amount NUMERIC) PARTITION BY order_date CLUSTER BY region OPTIONS(description='Partitioned by date, clustered by region');",
+    "create_external_table": "CREATE EXTERNAL TABLE my_dataset.external_gcs_table OPTIONS(format='CSV', uris=['gs://my_bucket/path/to/data/*.csv']);",
+    "create_view": "CREATE VIEW my_dataset.my_view AS SELECT column_name FROM my_dataset.my_table WHERE another_column > 100;",
+    "create_materialized_view": "CREATE MATERIALIZED VIEW my_dataset.my_materialized_view AS SELECT COUNT(DISTINCT customer_id) as unique_customers FROM my_dataset.clustered_table;",
+    "create_sql_udf": "CREATE FUNCTION my_dataset.multiply_by_two(x INT64) RETURNS INT64 AS (x * 2);",
+    "create_procedure": "CREATE PROCEDURE my_dataset.process_data(IN input_table STRING, OUT row_count INT64) BEGIN SET row_count = (SELECT COUNT(*) FROM my_dataset.input_table); END;"
+  },
+  "keywords_to_include_in_generation": [
+    "PARTITION BY",
+    "CLUSTER BY",
+    "OPTIONS(description='')",
+    "STRUCT",
+    "ARRAY"
+  ],
+  "data_type_notes": {
+    "STRING": "Variable-length Unicode characters.",
+    "BYTES": "Variable-length binary data.",
+    "INT64": "64-bit signed integer. Alias for INTEGER.",
+    "NUMERIC": "Exact decimal number with 38 digits of precision and 9 decimal places.",
+    "BIGNUMERIC": "Exact decimal number with 76.76 digits of precision and 38 decimal places.",
+    "FLOAT64": "64-bit floating-point number. Alias for FLOAT.",
+    "BOOL": "Boolean type (true or false).",
+    "DATE": "Represents a calendar date, independent of time zone.",
+    "DATETIME": "Represents a year, month, day, hour, minute, second, and subsecond. Does not store a time zone.",
+    "TIME": "Represents a time of day, independent of a specific date and time zone.",
+    "TIMESTAMP": "Represents an absolute point in time, with microsecond precision. Stored as UTC.",
+    "GEOGRAPHY": "Represents a point, linestring, or polygon on the Earth's surface.",
+    "JSON": "Represents JSON data.",
+    "ARRAY": "Ordered list of zero or more elements of the same non-array type.",
+    "STRUCT": "Container of ordered fields, each with a type and an optional field name."
+  }
+} 

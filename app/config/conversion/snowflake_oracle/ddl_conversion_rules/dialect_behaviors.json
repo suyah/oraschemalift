@@ -1,0 +1,43 @@
+{
+  "statement_skipping": {
+    "enabled": true,
+    "patterns": [
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?DATABASE",
+      "^\\s*USE\\s+WAREHOUSE",
+      "^\\s*USE\\s+DATABASE",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?TASK",
+      "^\\s*USE\\s+",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?FUNCTION",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?PROCEDURE",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?ROLE",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?USER",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?TAG",
+      "^\\s*GRANT\\s+"
+    ]
+  },
+  "clause_removal": {
+    "enabled": true,
+    "clauses": [
+      "CLUSTER BY",
+      "WITH ROW ACCESS POLICY",
+      "WITH TAG"
+    ]
+  },
+  "with_property_removal": {
+    "enabled": true,
+    "properties": [
+      "DATA_RETENTION_TIME_IN_DAYS",
+      "MAX_DATA_EXTENSION_TIME_IN_DAYS",
+      "CHANGE_TRACKING",
+      "DEFAULT_DDL_COLLATION"
+    ]
+  },
+  "comment_conversion": {
+    "enabled": true,
+    "target_table_template": "COMMENT ON TABLE {table_name} IS '{comment_text}'",
+    "target_column_template": "COMMENT ON COLUMN {table_name}.{column_name} IS '{comment_text}'"
+  },
+  "virtual_column_conversion": {
+    "enabled": true
+  }
+}

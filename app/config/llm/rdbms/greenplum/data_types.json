@@ -1,0 +1,43 @@
+{
+  "numeric": [
+    "SMALLINT", "INT2",
+    "INTEGER", "INT", "INT4",
+    "BIGINT", "INT8",
+    "DECIMAL", "NUMERIC",
+    "REAL", "FLOAT4",
+    "DOUBLE PRECISION", "FLOAT8",
+    "SERIAL", "SERIAL4",
+    "BIGSERIAL", "SERIAL8",
+    "MONEY"
+  ],
+  "string": [
+    "CHARACTER VARYING", "VARCHAR",
+    "CHARACTER", "CHAR",
+    "TEXT",
+    "NAME",
+    "BYTEA"
+  ],
+  "datetime": [
+    "TIMESTAMP", "TIMESTAMP WITHOUT TIME ZONE",
+    "TIMESTAMPTZ", "TIMESTAMP WITH TIME ZONE",
+    "DATE",
+    "TIME", "TIME WITHOUT TIME ZONE",
+    "TIMETZ", "TIME WITH TIME ZONE",
+    "INTERVAL"
+  ],
+  "boolean": [
+    "BOOLEAN", "BOOL"
+  ],
+  "network": [
+    "CIDR", "INET", "MACADDR"
+  ],
+  "geometric": [
+    "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE"
+  ],
+  "json": [
+    "JSON"
+  ],
+  "other": [
+    "XML"
+  ]
+} 

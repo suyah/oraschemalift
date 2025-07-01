@@ -1,0 +1,53 @@
+{
+  "numeric": [
+    "SMALLINT", "INT2", 
+    "INTEGER", "INT", "INT4", 
+    "BIGINT", "INT8", 
+    "DECIMAL", "NUMERIC", 
+    "REAL", "FLOAT4", 
+    "DOUBLE PRECISION", "FLOAT8", 
+    "SMALLSERIAL", "SERIAL2", 
+    "SERIAL", "SERIAL4", 
+    "BIGSERIAL", "SERIAL8",
+    "MONEY"
+  ],
+  "string": [
+    "CHARACTER VARYING", "VARCHAR", 
+    "CHARACTER", "CHAR", 
+    "TEXT",
+    "NAME",
+    "BYTEA"
+  ],
+  "datetime": [
+    "TIMESTAMP", "TIMESTAMP WITHOUT TIME ZONE", 
+    "TIMESTAMPTZ", "TIMESTAMP WITH TIME ZONE", 
+    "DATE", 
+    "TIME", "TIME WITHOUT TIME ZONE", 
+    "TIMETZ", "TIME WITH TIME ZONE", 
+    "INTERVAL"
+  ],
+  "boolean": [
+    "BOOLEAN", "BOOL"
+  ],
+  "network": [
+    "CIDR", "INET", "MACADDR", "MACADDR8"
+  ],
+  "geometric": [
+    "POINT", "LINE", "LSEG", "BOX", "PATH", "POLYGON", "CIRCLE"
+  ],
+  "json": [
+    "JSON", "JSONB"
+  ],
+  "uuid": [
+    "UUID"
+  ],
+  "text_search": [
+    "TSVECTOR", "TSQUERY"
+  ],
+  "range": [
+    "INT4RANGE", "INT8RANGE", "NUMRANGE", "TSRANGE", "TSTZRANGE", "DATERANGE"
+  ],
+  "other": [
+    "XML", "PG_LSN", "PG_SNAPSHOT", "TXID_SNAPSHOT"
+  ]
+} 

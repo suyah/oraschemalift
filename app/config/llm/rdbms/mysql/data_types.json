@@ -1,0 +1,34 @@
+{
+  "numeric": [
+    "TINYINT", "SMALLINT", "MEDIUMINT", "INT", "INTEGER", "BIGINT",
+    "DECIMAL", "DEC", "NUMERIC", "FIXED",
+    "FLOAT", "DOUBLE", "DOUBLE PRECISION", "REAL",
+    "BIT", "SERIAL"
+  ],
+  "string": [
+    "CHAR", "CHARACTER", "VARCHAR", "CHARACTER VARYING",
+    "NCHAR", "NATIONAL CHAR", "NVARCHAR", "NATIONAL VARCHAR",
+    "BINARY", "VARBINARY",
+    "TINYTEXT", "TEXT", "MEDIUMTEXT", "LONGTEXT",
+    "TINYBLOB", "BLOB", "MEDIUMBLOB", "LONGBLOB"
+  ],
+  "datetime": [
+    "DATE", "TIME", "DATETIME", "TIMESTAMP", "YEAR"
+  ],
+  "json": [
+    "JSON"
+  ],
+  "spatial": [
+    "GEOMETRY", "POINT", "LINESTRING", "POLYGON", 
+    "MULTIPOINT", "MULTILINESTRING", "MULTIPOLYGON", "GEOMETRYCOLLECTION"
+  ],
+  "vector": [
+    "VECTOR"
+  ],
+  "enum_set": [
+    "ENUM", "SET"
+  ],
+  "boolean": [
+    "BOOLEAN", "BOOL"
+  ]
+} 

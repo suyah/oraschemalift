@@ -1,0 +1,8 @@
+{
+  "numeric": ["NUMBER", "DECIMAL", "NUMERIC", "INT", "INTEGER", "BIGINT", "SMALLINT", "TINYINT", "BYTEINT", "FLOAT", "FLOAT4", "FLOAT8", "DOUBLE", "DOUBLE PRECISION", "REAL"],
+  "string": ["CHAR", "CHARACTER", "VARCHAR", "STRING", "TEXT"],
+  "datetime": ["DATE", "TIME", "DATETIME", "TIMESTAMP", "TIMESTAMP_LTZ", "TIMESTAMP_NTZ", "TIMESTAMP_TZ"],
+  "semi_structured": ["VARIANT", "OBJECT", "ARRAY"],
+  "binary": ["BINARY", "VARBINARY"],
+  "other": ["BOOLEAN", "GEOGRAPHY", "GEOMETRY", "VECTOR"]
+}

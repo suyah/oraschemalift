@@ -1,0 +1,25 @@
+{
+  "numeric": [
+    "INT64", "INTEGER", "BIGINT",
+    "NUMERIC", "DECIMAL", "BIGNUMERIC", "BIGDECIMAL",
+    "FLOAT64", "FLOAT"
+  ],
+  "string": [
+    "STRING", "BYTES"
+  ],
+  "datetime": [
+    "DATE", "DATETIME", "TIME", "TIMESTAMP"
+  ],
+  "boolean": [
+    "BOOL", "BOOLEAN"
+  ],
+  "complex": [
+    "ARRAY", "STRUCT", "JSON"
+  ],
+  "geography": [
+    "GEOGRAPHY"
+  ],
+  "interval": [
+    "INTERVAL"
+  ]
+} 

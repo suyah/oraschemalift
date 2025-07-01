@@ -1,0 +1,71 @@
+{
+  "dialect_name": "Greenplum",
+  "version_info_query": "SELECT version();",
+  "documentation_link": "https://docs.vmware.com/en/VMware-Greenplum/index.html",
+  "naming_conventions": {
+    "max_identifier_length": 63,
+    "case_sensitivity": "Preserves case for quoted identifiers, otherwise lowercases. Keywords are case-insensitive.",
+    "allowed_characters": "Letters, numbers, underscores. Quoted identifiers can include other characters.",
+    "table_naming": "schema_name.table_name (if schema specified)",
+    "column_naming": "Typically snake_case."
+  },
+  "supported_objects": {
+    "tables": {
+      "creatable": true,
+      "notes": "Supports heap and append-optimized tables (row or column-oriented). Distribution (DISTRIBUTED BY) and partitioning are key features."
+    },
+    "views": {
+      "creatable": true,
+      "notes": "Standard SQL views."
+    },
+    "indexes": {
+      "creatable": true,
+      "notes": "B-tree, Hash, GiST, SP-GiST, GIN, BRIN. Bitmap indexes are common for OLAP."
+    },
+    "sequences": {
+      "creatable": true,
+      "notes": "Standard SQL sequences."
+    },
+    "functions": {
+      "creatable": true,
+      "notes": "Supports PL/pgSQL, PL/Python, PL/Java, PL/R, SQL functions."
+    },
+    "procedures": {
+      "creatable": true,
+      "notes": "Supported, similar to PostgreSQL using PL/pgSQL primarily."
+    },
+    "triggers": {
+      "creatable": true,
+      "notes": "Supported."
+    },
+    "external_tables": {
+      "creatable": true,
+      "notes": "Readable and writable external tables for accessing data outside the database (e.g., files, HDFS, S3)."
+    },
+    "resource_queues": {
+      "creatable": true,
+      "notes": "For managing concurrency and resource allocation."
+    }
+  },
+  "feature_syntax_examples": {
+    "create_table_distributed": "CREATE TABLE sales (id INT, date DATE, amt DECIMAL(10,2)) DISTRIBUTED BY (id);",
+    "create_table_distributed_randomly": "CREATE TABLE logs (log_id BIGSERIAL, message TEXT, log_time TIMESTAMP) DISTRIBUTED RANDOMLY;",
+    "create_append_optimized_columnar_table": "CREATE TABLE product_reviews (review_id INT, product_id INT, review_text TEXT, rating SMALLINT) WITH (APPENDOPTIMIZED=TRUE, ORIENTATION=COLUMN) DISTRIBUTED BY (product_id);",
+    "create_partitioned_table": "CREATE TABLE sales_history (sale_id INT, sale_date DATE, region TEXT, amount DECIMAL) DISTRIBUTED BY (sale_id) PARTITION BY RANGE (sale_date) (START (date '2022-01-01') INCLUSIVE END (date '2023-01-01') EXCLUSIVE EVERY (INTERVAL '1 month'));",
+    "create_readable_external_table": "CREATE READABLE EXTERNAL TABLE daily_logs_ext (LIKE daily_logs_template) LOCATION ('gpfdist://filehost:8081/*.log') FORMAT 'TEXT' (DELIMITER AS ',');",
+    "create_plpgsql_function": "CREATE OR REPLACE FUNCTION get_total_sales(p_product_id INT) RETURNS DECIMAL AS $$ DECLARE total_sales DECIMAL; BEGIN SELECT SUM(amount) INTO total_sales FROM sales WHERE product_id = p_product_id; RETURN total_sales; END; $$ LANGUAGE plpgsql;"
+  },
+  "keywords_to_include_in_generation": [
+    "DISTRIBUTED BY",
+    "DISTRIBUTED RANDOMLY",
+    "PARTITION BY",
+    "WITH (APPENDOPTIMIZED=TRUE, ORIENTATION=COLUMN)",
+    "EXTERNAL TABLE",
+    "LOCATION",
+    "FORMAT"
+  ],
+  "data_type_notes": {
+    "TEXT": "Preferred over VARCHAR without length for unlimited string storage with good performance.",
+    "JSON": "Greenplum 6+ supports JSON data type."
+  }
+} 

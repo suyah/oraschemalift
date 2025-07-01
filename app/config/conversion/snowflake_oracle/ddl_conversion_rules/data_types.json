@@ -1,0 +1,92 @@
+{
+  "default": {
+    "VARCHAR": "VARCHAR2",
+    "STRING": "VARCHAR2(4000)",
+    "TEXT": "CLOB",
+    "CHAR": "CHAR",
+    "CHARACTER": "CHAR",
+    "NCHAR": "NCHAR",
+    "NVARCHAR": "NVARCHAR2",
+    "BINARY": "BLOB",
+    "VARBINARY": "BLOB",
+    "INT": "NUMBER(38,0)",
+    "INTEGER": "NUMBER(38,0)",
+    "BIGINT": "NUMBER(19,0)",
+    "SMALLINT": "NUMBER(5,0)",
+    "TINYINT": "NUMBER(3,0)",
+    "BYTEINT": "NUMBER(3,0)",
+    "DECIMAL": "NUMBER",
+    "NUMERIC": "NUMBER",
+    "NUMBER": "NUMBER",
+    "FLOAT": "BINARY_DOUBLE",
+    "FLOAT4": "BINARY_FLOAT",
+    "FLOAT8": "BINARY_DOUBLE",
+    "REAL": "BINARY_FLOAT",
+    "DOUBLE": "BINARY_DOUBLE",
+    "DOUBLE PRECISION": "BINARY_DOUBLE",
+    "BOOLEAN": "NUMBER(1,0)",
+    "DATE": "DATE",
+    "TIME": "TIMESTAMP",
+    "DATETIME": "TIMESTAMP",
+    "TIMESTAMP": "TIMESTAMP",
+    "TIMESTAMP_LTZ": "TIMESTAMP WITH LOCAL TIME ZONE",
+    "TIMESTAMP_NTZ": "TIMESTAMP",
+    "TIMESTAMP_TZ": "TIMESTAMP WITH TIME ZONE",
+    "VARIANT": "CLOB",
+    "OBJECT": "CLOB",
+    "ARRAY": "CLOB",
+    "GEOGRAPHY": "SDO_GEOMETRY",
+    "GEOMETRY": "SDO_GEOMETRY",
+    "VECTOR": "CLOB"
+  },
+  "overrides": {
+    "DATE_TRUNC": "TRUNC",
+    "IFNULL": "NVL",
+    "ZEROIFNULL": "NVL(?,0)",
+    "CURRENT_TIMESTAMP": "SYSTIMESTAMP",
+    "CURRENT_DATE": "SYSDATE",
+    "CURRENT_TIME": "SYSTIMESTAMP"
+  },
+  "version_overrides": {
+    "19c": {
+      "default": {
+        "JSON": "CLOB",
+        "VECTOR": "CLOB",
+        "VARIANT": "CLOB",
+        "BOOLEAN": "NUMBER(1,0)"
+      }
+    },
+    "21c": {
+      "default": {
+        "JSON": "JSON",
+        "VECTOR": "CLOB",
+        "VARIANT": "JSON",
+        "BOOLEAN": "NUMBER(1,0)"
+      }
+    },
+    "23ai": {
+      "default": {
+        "JSON": "JSON",
+        "VECTOR": "VECTOR",
+        "VARIANT": "JSON",
+        "BOOLEAN": "BOOLEAN",
+        "ARRAY": "JSON",
+        "OBJECT": "JSON"
+      }
+    }
+  },
+  "paramless_targets": [
+    "CLOB", "BLOB", "SDO_GEOMETRY", "BOOLEAN", "TEXT", "NCLOB"
+  ],
+  "output_aliases": {
+    "TIMESTAMPLTZ": "TIMESTAMP WITH LOCAL TIME ZONE",
+    "TIMESTAMPTZ": "TIMESTAMP WITH TIME ZONE",
+    "TIMESTAMPNTZ": "TIMESTAMP",
+    "TEXT": "CLOB"
+  },
+  "dynamic_rules": {
+    "STRING": { "max_size": 4000, "overflow_type": "CLOB", "template": "VARCHAR2({size})" },
+    "VARCHAR": { "max_size": 4000, "overflow_type": "CLOB", "template": "VARCHAR2({size})" },
+    "VARCHAR2": { "max_size": 4000, "overflow_type": "CLOB", "template": "VARCHAR2({size})" }
+  }
+} 

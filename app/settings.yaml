@@ -1,0 +1,44 @@
+# API Configuration
+api:
+  version: 'v1'
+  port: 5001
+  debug: true
+
+# LLM Configuration
+llm:
+  model_id: "meta.llama-3.1-405b-instruct"
+  endpoint: "https://inference.generativeai.us-chicago-1.oci.oraclecloud.com"
+  compartment_id: ${OCI_COMPARTMENT_ID} # Environment variable
+  temperature: 0.0
+  max_tokens: 4000
+
+# Base Directories
+base_dirs:
+  app: 'app'
+  workspace: 'workspace'
+  logs: 'logs'
+
+# Logging Configuration
+logging:
+  rotation:
+    max_bytes: 10485760    # 10MB in bytes (10 * 1024 * 1024)
+    backup_count: 5        # Keep 5 backup files (app.log.1, app.log.2, etc.)
+    encoding: 'utf-8'
+  level:
+    console: 'INFO'        
+    file: 'DEBUG'          
+
+# Sub-directories within 'workspace'
+workspace_sub_dirs:
+  samples: 'samples'                               # LLM-generated demo/test SQL
+  extracts: 'extracts'                             # SQL extracted from customer DBs
+  uploads: 'uploads'                               # User-provided files (projects, wallets)
+
+  scripts_parent: "sql_files"            # Parent folder for 'source' and 'converted' scripts
+  scripts_source: "source"               # Subfolder for initial scripts
+  scripts_converted: "converted"         # Subfolder for converted output
+  oracle_wallets_base: 'uploads/wallets/oracle'       # Base directory for uploaded Oracle wallets
+
+# Supported RDBMS for generation/conversion features
+supported_rdbms:
+  - snowflake

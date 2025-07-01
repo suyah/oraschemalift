@@ -1,0 +1,70 @@
+metadata:
+  name: "bigquery_sql"
+  version: "1.2"
+  description: "BigQuery-specific SQL generation rules with advanced features."
+
+system: |
+  BigQuery-Specific Rules:
+  - Use Standard SQL dialect for BigQuery.
+  - Data types are case-insensitive (e.g., INT64, STRING, TIMESTAMP, DATE, NUMERIC, BIGNUMERIC, BOOLEAN, BYTES, GEOGRAPHY, JSON).
+  - Object names (datasets, tables, columns) are case-insensitive but often written in lowercase_with_underscores.
+  - For generated DDL, assume the dataset context is set, so just use `table_name`.
+
+  Table Rules:
+  - The first table MUST be DATATYPE_TABLE demonstrating ALL BigQuery data types from {data_types}.
+  - Use BigQuery data types from {data_types}.
+  - For at least 3-4 tables, include advanced features:
+    - Complex partitioning: `PARTITION BY DATE(timestamp_column)`, `PARTITION BY DATETIME_TRUNC(datetime_col, DAY)`, or `PARTITION BY RANGE_BUCKET(int64_column, GENERATE_ARRAY(0, 1000, 100))`.
+    - Multi-column clustering: `CLUSTER BY column1, column2, column3, column4` (up to 4 columns).
+    - Advanced table options: `OPTIONS (description="Detailed table description", labels=[("department", "analytics"), ("classification", "sensitive"), ("owner", "data_team")], expiration_timestamp=TIMESTAMP_ADD(CURRENT_TIMESTAMP(), INTERVAL 365 DAY))`.
+    - Row-level security policies for sensitive data.
+    - Complex constraints and relationships using nested and repeated fields.
+
+  Advanced Schema Features:
+  - Use STRUCT and ARRAY data types for complex nested structures.
+  - Implement REPEATED fields for one-to-many relationships.
+  - Create tables with nested JSON structures for flexible schemas.
+  - Use GEOGRAPHY data types for spatial analysis capabilities.
+
+  View Rules:
+  - Create materialized views with complex aggregations and window functions.
+  - Use authorized views for fine-grained access control.
+  - Implement views with ARRAY and STRUCT operations.
+  - Create views that demonstrate BigQuery-specific functions like APPROX_QUANTILES, ARRAY_AGG, etc.
+
+  Function and Procedure Rules:
+  - Create SQL UDFs with complex logic: `CREATE OR REPLACE FUNCTION function_name(arg1 TYPE, ...) RETURNS RETURN_TYPE AS (( complex_sql_expression ));`.
+  - Create JavaScript UDFs for advanced processing: `CREATE OR REPLACE FUNCTION js_function_name(input STRING) RETURNS STRING LANGUAGE js AS "return input.toUpperCase();"`.
+  - Develop stored procedures with complex business logic: `CREATE OR REPLACE PROCEDURE procedure_name(IN arg1 TYPE, OUT arg2 TYPE) BEGIN ... END;`.
+  - Include procedures with:
+    - Multi-statement transactions and error handling.
+    - Dynamic SQL generation and execution.
+    - Complex data transformation and ETL operations.
+    - Machine learning model training and prediction workflows.
+    - Data quality validation and cleansing procedures.
+
+  Analytics and ML Features:
+  - Include BQML (BigQuery ML) statements for machine learning workflows.
+  - Create procedures that demonstrate BigQuery's analytical functions.
+  - Use BigQuery's statistical and mathematical functions.
+  - Implement time-series analysis and forecasting procedures.
+
+  Data Processing Rules:
+  - Create procedures for data pipeline orchestration.
+  - Implement data validation and quality checks.
+  - Use BigQuery's streaming and batch processing capabilities.
+  - Include procedures for data archival and lifecycle management.
+
+  Security Rules:
+  - Implement comprehensive IAM policies using BigQuery syntax.
+  - Create datasets with appropriate access controls.
+  - Use column-level security for sensitive data protection.
+  - Implement row-level security policies with complex conditions.
+  - Create authorized datasets and views for cross-project access.
+  - Use BigQuery's audit logging and monitoring capabilities.
+
+  Performance Optimization:
+  - Include table optimization recommendations (partitioning, clustering).
+  - Create procedures for query performance analysis.
+  - Implement cost optimization strategies.
+  - Use BigQuery's caching and materialized view features. 

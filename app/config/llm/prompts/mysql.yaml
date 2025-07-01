@@ -1,0 +1,81 @@
+metadata:
+  name: "mysql_sql"
+  version: "1.2"
+  description: "MySQL-specific SQL generation rules."
+
+system: |
+  MySQL-Specific Rules:
+  - Use MySQL 8.0+ compatible syntax.
+  - Prefer InnoDB storage engine (ENGINE=InnoDB).
+  - Use AUTO_INCREMENT for primary key columns where appropriate.
+  - Use MySQL-specific data types from {data_types}.
+  - Object names should be quoted with backticks if they contain special characters or reserved words.
+
+  CRITICAL JSON FORMAT REQUIREMENT:
+  - Each SQL statement MUST be a single JSON string with proper escaping.
+  - Use ONLY escaped newlines (\n) within strings, NOT JavaScript concatenation.
+  - DO NOT use patterns like "text\n" + "more text".
+  - Multi-line SQL should be formatted as: "CREATE TABLE example (\n  column1 INT,\n  column2 VARCHAR(50)\n);"
+
+  Table Rules:
+  - The first table MUST be DATATYPE_TABLE demonstrating ALL MySQL data types from {data_types}.
+  - Use ENGINE=InnoDB for transactional support.
+  - For at least 2-3 tables, include advanced MySQL features:
+    - `PARTITION BY RANGE (column)` or `PARTITION BY HASH (column)` with partition definitions.
+    - `AUTO_INCREMENT=1000` to set initial auto-increment value.
+    - `CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci` for proper Unicode support.
+    - `COMMENT='Table description'` for table-level comments.
+    - `COMMENT 'Column description'` for important columns.
+    - Complex constraints: CHECK constraints, UNIQUE constraints, composite foreign keys.
+    - Triggers: BEFORE INSERT, AFTER UPDATE triggers for audit trails.
+
+  View Rules:
+  - Create complex views with JOINs, aggregations, and window functions.
+  - Use MySQL-specific view features like WITH CHECK OPTION.
+
+  Function Rules:
+  - Use `DELIMITER //` and `DELIMITER ;` to properly handle function/procedure bodies.
+  - Functions must have `RETURNS` clause and `DETERMINISTIC` or `NOT DETERMINISTIC`.
+  - Use `BEGIN ... END` blocks for function/procedure bodies.
+  - Create functions for calculations, string manipulation, and business logic.
+  - Include READS SQL DATA, MODIFIES SQL DATA, or NO SQL appropriately.
+
+  Procedure Rules:
+  - Use `DELIMITER //` and `DELIMITER ;` for procedures.
+  - Use `BEGIN ... END` blocks with complex logic.
+  - Include transaction handling with START TRANSACTION, COMMIT, ROLLBACK.
+  - Use cursors, loops, and conditional logic for complex operations.
+  - Handle exceptions with DECLARE ... HANDLER.
+
+  Event (Task) Rules:
+  - Use MySQL EVENT syntax for scheduled tasks.
+  - Events require the event scheduler to be enabled.
+  - Use proper scheduling syntax: `ON SCHEDULE EVERY 1 DAY`.
+  - Create events for maintenance, reporting, and data processing.
+
+  Index Rules:
+  - Create compound indexes for performance optimization.
+  - Use FULLTEXT indexes for text search capabilities.
+  - Include spatial indexes for geometry columns.
+
+  Security Rules:
+  - Create users with `CREATE USER 'username'@'host' IDENTIFIED BY 'password'`.
+  - Use MySQL-specific GRANT syntax with database, table, and column-level privileges.
+  - Create roles if MySQL 8.0+ features are available: `CREATE ROLE role_name`.
+  - Implement row-level security where appropriate.
+
+  Trigger Rules:
+  - Create BEFORE and AFTER triggers for INSERT, UPDATE, DELETE operations.
+  - Use triggers for audit logging, data validation, and business rule enforcement.
+  - Include proper error handling in triggers.
+
+  Referenced Documentation:
+  - MySQL CREATE TABLE: https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+  - MySQL Data Types: https://dev.mysql.com/doc/refman/8.0/en/data-types.html
+  - MySQL Functions: https://dev.mysql.com/doc/refman/8.0/en/create-procedure.html
+
+user: |
+  Generate a MySQL database schema with {table_count} tables following TPC-DS patterns.
+  Use the provided data types: {data_types}
+  
+  Remember: Output must be valid JSON with properly escaped strings - no JavaScript concatenation! 

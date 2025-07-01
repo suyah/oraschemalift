@@ -1,0 +1,100 @@
+metadata:
+  name: "snowflake_sql"
+  version: "1.6"
+  description: "Snowflake-specific SQL generation rules, including advanced table features and precise output formatting."
+
+system: |
+  Follow these Snowflake-specific rules VERY CAREFULLY:
+  
+  Output Format Rules (General rules from common.yaml also apply):
+  - Ensure each generated SQL DDL/DML statement is a single, unbroken string in the JSON output, using `\n` for internal newlines.
+
+  General Snowflake Rules:
+  - Use CREATE OR REPLACE instead of CREATE in all SQL statements.
+  - NO COPY INTO statements.
+  - No Check Constraints (use other mechanisms if value validation is needed).
+  - Refer to https://docs.snowflake.com/en/sql-reference/sql/create-table-constraint for table and column constraints definition.
+  - IMPORTANT: When using TAGs, you MUST CREATE the tags first before using them in any object. Include tag creation in the 'security' section of your output.
+
+  Table Rules:
+  - The VERY FIRST table generated MUST be the `DATATYPE_TABLE` as described in common.yaml. It should primarily demonstrate all supported data types and have a simple primary key. Do not apply other advanced physical attributes to this specific `DATATYPE_TABLE` unless absolutely necessary for a data type test.
+  - For all other tables (not the `DATATYPE_TABLE`):
+    - They MUST include standard inline or table-level `CONSTRAINT` definitions for Primary Keys and Foreign Keys as per TPC-DS schema requirements and `common.yaml`.
+    - Advanced Table Features: Apply a MIX of the following features to at least 2-3 *other* tables (not the DATATYPE_TABLE). Each of these 2-3 tables should demonstrate AT LEAST ONE of these advanced features. Strive to showcase different features across these tables rather than all features on one table.
+      - When applying these advanced features, they should be added AFTER the closing parenthesis of the column and constraint definitions.
+      - The DDL structure should be `CREATE TABLE table_name (col1 type, col2 type, ..., CONSTRAINT pk_name PRIMARY KEY (col), ...) ADVANCED_FEATURE_CLAUSES;`
+      - Include `CLUSTER BY (column_name [, column_name ...])` on at least one large fact-like table.
+      - Add a `COMMENT = 'Your insightful table comment here'` to the table definition for a few tables.
+      - Add inline `COMMENT 'Your insightful column comment here'` to a few critical columns.
+      - Set `DATA_RETENTION_TIME_IN_DAYS = <number>` (e.g., 1 to 7) on a couple of tables.
+      - Optionally, include `ENABLE_SCHEMA_EVOLUTION = TRUE` on one or two tables.
+      - Optionally, add `TAG (department = 'finance', project_dl = 'dl_sales')` to a table, but ONLY if you've included the corresponding tag creation statements in the 'security' section.
+  
+  Tag Rules:
+  - If you plan to use TAGs on any objects, you MUST first create the tags in the 'security' section of your output.
+  - Example of creating tags:
+    CREATE OR REPLACE TAG department COMMENT = 'Department ownership tag';
+    CREATE OR REPLACE TAG project_dl COMMENT = 'Project data leader tag';
+    CREATE OR REPLACE TAG sensitivity COMMENT = 'Data sensitivity classification tag';
+
+  - Example of a table with columns, CONSTRAINTS, and ADVANCED features (illustrating the DDL structure):
+    CREATE OR REPLACE TABLE sales_fact (
+      sale_id INTEGER NOT NULL COMMENT 'Unique identifier for the sale transaction',
+      product_id INTEGER NOT NULL,
+      customer_id INTEGER NOT NULL,
+      sale_date DATE NOT NULL,
+      quantity INTEGER NOT NULL,
+      revenue DECIMAL(18,2) COMMENT 'Total revenue for the sale line.',
+      profit DECIMAL(18,2),
+      CONSTRAINT pk_sales_fact PRIMARY KEY (sale_id, sale_date),
+      CONSTRAINT fk_sales_product FOREIGN KEY (product_id) REFERENCES products(p_product_id) -- Assuming a products table
+    )
+    CLUSTER BY (sale_date, product_id)
+    DATA_RETENTION_TIME_IN_DAYS = 7
+    COMMENT = 'Fact table storing detailed sales transactions with constraints and physical attributes.'
+    TAG (department = 'finance', project_dl = 'dl_sales');
+
+  SQL Function/SQL Procedure Rules:
+  - No Begin and End keywords should be used in SQL function body.
+  - Refer to https://docs.snowflake.com/en/developer-guide/udf/sql/udf-sql-introduction for sql function syntax  
+  - Refer to https://docs.snowflake.com/en/developer-guide/stored-procedure/stored-procedures-snowflake-scripting for SQL stored procedure syntax. 
+  
+  Example SQL Scalar Function:
+  CREATE OR REPLACE FUNCTION GET_CUSTOMER_NAME(IN_CUSTOMER_ID NUMBER(38,0))
+  RETURNS VARCHAR(100)
+  LANGUAGE SQL
+  AS
+  $$
+  SELECT C_NAME FROM CUSTOMERS WHERE C_CUSTOMER_ID = IN_CUSTOMER_ID
+  $$;
+
+  Example SQL Procedure:
+  CREATE OR REPLACE PROCEDURE GENERATE_QUARTERLY_BUSINESS_REVIEW()
+  RETURNS STRING
+  LANGUAGE SQL
+  AS
+  $$
+  BEGIN
+    INSERT INTO STORE_METRICS (NAME, DESCRIPTION, VALUE)
+    SELECT 'Quarterly Sales', 'Total sales for the quarter', SUM(TOTAL)
+    FROM ORDERS
+    WHERE ORDER_DATE >= DATE_TRUNC('quarter', CURRENT_DATE)
+      AND ORDER_DATE < DATEADD(quarter, 1, DATE_TRUNC('quarter', CURRENT_DATE));
+
+    RETURN 'Procedure completed';
+  END;
+  $$;
+
+  Example Task:
+  CREATE OR REPLACE TASK CALCULATE_STORE_METRICS
+    WAREHOUSE = 'COMPUTE_WH'
+    SCHEDULE = 'USING CRON 0 0 * * * UTC'
+  AS
+    CALL GENERATE_QUARTERLY_BUSINESS_REVIEW();
+
+
+ 
+  Limitations & Restrictions:
+  - Define defaults in CREATE TABLE
+  - Use SEQUENCE or define IDENTITY at creation
+  - Use 5-field CRON format: minute hour day month day_of_week UTC

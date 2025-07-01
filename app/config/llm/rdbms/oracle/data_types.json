@@ -1,0 +1,55 @@
+{
+  "numeric": [
+    "NUMBER",
+    "BINARY_FLOAT",
+    "BINARY_DOUBLE",
+    "FLOAT",
+    "DECIMAL",
+    "INTEGER",
+    "INT",
+    "SMALLINT",
+    "REAL"
+  ],
+  "string": [
+    "VARCHAR2",
+    "NVARCHAR2",
+    "VARCHAR",
+    "CHAR",
+    "NCHAR",
+    "CLOB",
+    "NCLOB",
+    "LONG"
+  ],
+  "datetime": [
+    "DATE",
+    "TIMESTAMP",
+    "TIMESTAMP WITH TIME ZONE",
+    "TIMESTAMP WITH LOCAL TIME ZONE",
+    "INTERVAL YEAR TO MONTH",
+    "INTERVAL DAY TO SECOND"
+  ],
+  "lob": [
+    "BLOB",
+    "CLOB",
+    "NCLOB",
+    "BFILE"
+  ],
+  "raw": [
+    "RAW",
+    "LONG RAW"
+  ],
+  "rowid": [
+    "ROWID",
+    "UROWID"
+  ],
+  "other": [
+    "XMLTYPE",
+    "URIType",
+    "SDO_GEOMETRY", 
+    "ANYTYPE", 
+    "ANYDATA", 
+    "ANYDATASET",
+    "JSON",
+    "BOOLEAN" 
+  ]
+} 
