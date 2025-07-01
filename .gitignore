@@ -1,3 +1,9 @@
+# application specific files
+.*
+workspace/
+logs/
+frontend/db_connections.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
