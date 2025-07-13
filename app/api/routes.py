@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException, Body, Form, File, UploadFile
 from fastapi.responses import JSONResponse
 from typing import Dict, Any, List
+from app.utils.timing import timed
 import os
 import zipfile
 import shutil
@@ -27,7 +28,7 @@ from app.services.db.connection_store import (
     delete_connection as _del_conn,
 )
 from app.services.qa import run_roundtrip
-from app.services.data_movement import run_unload
+from app.services.data_unload import run_unload
 
 api_router = APIRouter(prefix='/api/v1')
 
@@ -263,7 +264,9 @@ def convert_sql_endpoint(payload: Dict[str, Any] = Body(...)):
                 return JSONResponse({'error': 'For extracts, provide "user_folder" or "run_timestamp" in input_path_config'}, status_code=400)
 
             userdata_subdir_name = config['workspace_sub_dirs']['extracts']
-            actual_input_path = os.path.join(workspace_base_dir, userdata_subdir_name, db_type, folder_name)
+            scripts_parent = config['workspace_sub_dirs'].get('scripts_parent', 'sql_files')
+            source_subdir = config['workspace_sub_dirs'].get('scripts_source', 'source')
+            actual_input_path = os.path.join(workspace_base_dir, userdata_subdir_name, db_type, folder_name, scripts_parent, source_subdir)
         elif input_path_type == 'uploads':
             folder_name = input_path_config.get('project_name')
             if not folder_name:
@@ -342,7 +345,9 @@ def llm_convert_sql_endpoint(payload: Dict[str, Any] = Body(...)):
                 return JSONResponse({'error': 'For extracts, provide "user_folder" or "run_timestamp" in input_path_config'}, status_code=400)
 
             userdata_subdir_name = config['workspace_sub_dirs']['extracts']
-            actual_input_path = os.path.join(workspace_base_dir, userdata_subdir_name, db_type, folder_name)
+            scripts_parent = config['workspace_sub_dirs'].get('scripts_parent', 'sql_files')
+            source_subdir = config['workspace_sub_dirs'].get('scripts_source', 'source')
+            actual_input_path = os.path.join(workspace_base_dir, userdata_subdir_name, db_type, folder_name, scripts_parent, source_subdir)
         elif input_path_type == 'uploads':
             folder_name = input_path_config.get('project_name')
             if not folder_name:
@@ -574,3 +579,71 @@ def _resolve_connection(payload: Dict[str, Any]):
     conn_payload = saved[name]
     # if caller omitted db_type we can try to infer
     return conn_payload, db_type or conn_payload.get("db_type")
+
+# ------------------- Data unload -------------------
+
+@api_router.post('/data/unload/table')
+def unload_table_endpoint(payload: Dict[str, Any] = Body(...)):
+    """Unload a single table to cloud storage (Snowflake COPY INTO…)."""
+    try:
+        conn_cfg, db_type = _resolve_connection(payload)
+        from app.services.data_unload import run_unload  # local import to avoid cycles
+
+        result = timed(run_unload, db_type=db_type, mode="table", connection=conn_cfg, params=payload)
+        status_code = 200 if result.get("status") == "success" else 400
+        return JSONResponse(result, status_code=status_code)
+    except ValueError as ve:
+        return JSONResponse({"error": str(ve)}, status_code=400)
+    except Exception as exc:
+        logger.error("table unload failed", exc_info=True)
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+@api_router.post('/data/unload/schema')
+def unload_schema_endpoint(payload: Dict[str, Any] = Body(...)):
+    """Unload every table in a schema."""
+    try:
+        conn_cfg, db_type = _resolve_connection(payload)
+        from app.services.data_unload import run_unload
+
+        result = timed(run_unload, db_type=db_type, mode="schema", connection=conn_cfg, params=payload)
+        status_code = 200 if result.get("status") == "success" else 400
+        return JSONResponse(result, status_code=status_code)
+    except ValueError as ve:
+        return JSONResponse({"error": str(ve)}, status_code=400)
+    except Exception as exc:
+        logger.error("schema unload failed", exc_info=True)
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+# ------------------- Data load -------------------
+
+@api_router.post('/data/load/table')
+def load_table_endpoint(payload: Dict[str, Any] = Body(...)):
+    """Load a single table into Oracle with DBMS_CLOUD.COPY_DATA."""
+    try:
+        conn_cfg, db_type = _resolve_connection(payload)
+        from app.services.data_load import run_load
+
+        result = timed(run_load, db_type=db_type, mode="table", connection=conn_cfg, params=payload)
+        status_code = 200 if result.get("status") == "success" else 400
+        return JSONResponse(result, status_code=status_code)
+    except ValueError as ve:
+        return JSONResponse({"error": str(ve)}, status_code=400)
+    except Exception as exc:
+        logger.error("table load failed", exc_info=True)
+        return JSONResponse({"error": str(exc)}, status_code=500)
+
+@api_router.post('/data/load/schema')
+def load_schema_endpoint(payload: Dict[str, Any] = Body(...)):
+    """Load all tables listed in manifest or schema."""
+    try:
+        conn_cfg, db_type = _resolve_connection(payload)
+        from app.services.data_load import run_load
+
+        result = timed(run_load, db_type=db_type, mode="schema", connection=conn_cfg, params=payload)
+        status_code = 200 if result.get("status") == "success" else 400
+        return JSONResponse(result, status_code=status_code)
+    except ValueError as ve:
+        return JSONResponse({"error": str(ve)}, status_code=400)
+    except Exception as exc:
+        logger.error("schema load failed", exc_info=True)
+        return JSONResponse({"error": str(exc)}, status_code=500)
