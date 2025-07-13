@@ -10,6 +10,7 @@ import os
 import json
 import re # Added for parsing database name
 from app.utils.file_utils import find_sql_files, read_file_content, write_file_content
+from app.services.db.connection_factory import get_connection as _get_conn
 
 class DBService:
     def __init__(self):
@@ -438,84 +439,24 @@ class DBService:
     def _get_connection(self, connection_params: Dict):
         """Get database connection based on type"""
         try:
-            db_type = connection_params.get('db_type', '').lower()
-            self.logger.info(f"Attempting to connect to database type: {db_type}")
+            from app.services.db.connection_factory import get_connection as _get_conn
+
+            db_type = (connection_params.get('db_type') or '').lower()
+            self.logger.info("Attempting to connect to database type: %s", db_type)
             
-            if db_type == 'snowflake':
-                # Connecting without specifying a database initially
-                self.logger.info(f"Connecting to Snowflake with user: {connection_params.get('user')}, account: {connection_params.get('account')}. Database will be set by SQL or use default.")
-                return snowflake.connector.connect(
-                    user=connection_params.get('user'), 
-                    password=connection_params.get('password'),
-                    account=connection_params.get('account'),
-                    # database=connection_params.get('database'), # Removed to test default/USE DATABASE behavior
-                    warehouse=connection_params.get('warehouse'),
-                    role=connection_params.get('role')
-                )
-            elif db_type == 'oracle':
-                self.logger.info(f"Connecting to Oracle with user: {connection_params.get('user')}, dsn: {connection_params.get('dsn')}")
+            # Delegate connection creation entirely to connection_factory which
+            # now handles wallet_dir resolution for Oracle. This removes
+            # duplicate logic and ensures consistent behaviour across all
+            # code paths (db_service, data_load, etc.).
 
-                oracle_conn_params = {
-                    "user": connection_params.get('user'),
-                    "password": connection_params.get('password'),
-                    "dsn": connection_params.get('dsn')
-                }
+            self.logger.info(
+                "Connecting to %s with user: %s, dsn: %s",
+                db_type.capitalize(),
+                connection_params.get("user"),
+                connection_params.get("dsn"),
+            )
 
-                # For OCI Autonomous Database with mTLS (Wallet)
-                wallet_dir_param = connection_params.get('wallet_dir') # Changed from config_dir
-                wallet_location_param = connection_params.get('wallet_location') # Keep explicit wallet_location for overrides
-                wallet_password = connection_params.get('wallet_password')
-
-                if wallet_dir_param: # If wallet_dir is provided, assume mTLS wallet connection
-                    actual_wallet_path = None
-                    if os.path.isabs(wallet_dir_param):
-                        actual_wallet_path = wallet_dir_param
-                    else:
-                        # Construct path relative to the configured 'oracle_wallets_base'
-                        # (e.g., workspace/userdata/oracle/connections/)
-                        workspace_base_dir = self.config.get('base_dirs', {}).get('workspace')
-                        oracle_wallets_subdir = self.config.get('workspace_sub_dirs', {}).get('oracle_wallets_base')
-
-                        if workspace_base_dir and oracle_wallets_subdir:
-                            default_base_wallet_path = os.path.join(workspace_base_dir, oracle_wallets_subdir)
-                            actual_wallet_path = os.path.join(default_base_wallet_path, wallet_dir_param)
-                            # Ensure the constructed path is normalized (e.g., handles ..) and absolute
-                            actual_wallet_path = os.path.abspath(actual_wallet_path)
-                        else:
-                            self.logger.error("Default wallet base path configuration is missing (base_dirs.workspace or workspace_sub_dirs.oracle_wallets_base). Cannot resolve relative wallet_dir.")
-                            # Fallback or raise error - for now, try to use wallet_dir_param as is, though it might fail if relative
-                            actual_wallet_path = wallet_dir_param
-
-
-                    if actual_wallet_path:
-                        oracle_conn_params["config_dir"] = actual_wallet_path
-                        oracle_conn_params["wallet_location"] = wallet_location_param if wallet_location_param else actual_wallet_path
-                        if wallet_password:
-                            oracle_conn_params["wallet_password"] = wallet_password
-                        self.logger.info(f"Using wallet configuration: resolved wallet_dir (used as config_dir for oracledb)='{oracle_conn_params['config_dir']}', wallet_location='{oracle_conn_params['wallet_location']}'")
-                    else:
-                        self.logger.warning(f"wallet_dir '{wallet_dir_param}' was provided but could not be resolved to a valid path. Proceeding without wallet-specific parameters.")
-
-                return oracledb.connect(**oracle_conn_params)
-            elif db_type in ('postgres', 'postgresql', 'greenplum'):
-                self.logger.info(f"Connecting to {db_type} with host: {connection_params.get('host')}, user: {connection_params.get('user')}, database: {connection_params.get('database')}")
-                return psycopg2.connect(
-                    host=connection_params.get('host'),
-                    port=connection_params.get('port', 5432),
-                    database=connection_params.get('database'),
-                    user=connection_params.get('user'),
-                    password=connection_params.get('password')
-                )
-            elif db_type == 'bigquery':
-                project_id = connection_params.get('project_id')
-                self.logger.info(f"Connecting to Google BigQuery, project: {project_id if project_id else 'Default Project (from credentials)'}")
-                if project_id:
-                    return bigquery.Client(project=project_id)
-                else:
-                    return bigquery.Client()
-            else:
-                self.logger.error(f"Unsupported database type: {db_type}")
-                raise ValueError(f"Unsupported database type: {db_type}")
+            return _get_conn(db_type, connection_params)
             
         except Exception as e:
             self.logger.error(f"Failed to connect to {connection_params.get('type', 'unknown')}: {str(e)}", exc_info=True)

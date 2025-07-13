@@ -10,7 +10,7 @@ import logging
 from pathlib import Path
 from typing import Dict, Any, List
 
-import snowflake.connector
+from app.services.db.connection_factory import get_connection as _get_conn
 
 from app.utils.logger import setup_logger
 from app.utils.file_utils import write_file_content, write_csv
@@ -49,9 +49,10 @@ class SnowflakeExtractor:
         grants_dir.mkdir(parents=True, exist_ok=True)
 
         # ------------------------------------------------------------------
-        # Connect
+        # Connect via shared factory
         # ------------------------------------------------------------------
-        conn = snowflake.connector.connect(**{k: v for k, v in conn_params.items() if v is not None})
+        conn_params["db_type"] = "snowflake"
+        conn = _get_conn("snowflake", conn_params)
         cur = conn.cursor()
 
         try:
