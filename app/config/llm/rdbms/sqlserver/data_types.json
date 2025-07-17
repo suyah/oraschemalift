@@ -1,0 +1,8 @@
+{
+    "numeric": ["TINYINT", "SMALLINT", "INT", "BIGINT", "DECIMAL", "NUMERIC", "MONEY", "SMALLMONEY", "FLOAT", "REAL"],
+    "string": ["CHAR", "NCHAR", "VARCHAR", "NVARCHAR", "VARCHAR(MAX)", "NVARCHAR(MAX)", "TEXT", "NTEXT"],
+    "datetime": ["DATE", "TIME", "DATETIME", "SMALLDATETIME", "DATETIME2", "DATETIMEOFFSET"],
+    "semi_structured": ["XML"],
+    "binary": ["BINARY", "VARBINARY", "VARBINARY(MAX)", "IMAGE"],
+    "other": ["BIT", "UNIQUEIDENTIFIER", "ROWVERSION", "SQL_VARIANT", "GEOGRAPHY", "GEOMETRY", "HIERARCHYID"]
+  }  

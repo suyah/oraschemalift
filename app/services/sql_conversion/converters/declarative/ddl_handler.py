@@ -118,6 +118,11 @@ class DdlHandler(BaseConverter):
             table_name = ast.this.this.name
             self.logger.debug(f"Handling DDL for table: {table_name}")
 
+            # --------------------------------------------------------------
+            # Optional identifier quote stripping ( [col] -> col )
+            # --------------------------------------------------------------
+            self._strip_identifier_quotes(ast)
+
             # --- Apply sequence of AST transformations ---
             self._apply_data_type_conversions(ast)
             self._handle_virtual_columns(ast)
@@ -161,6 +166,11 @@ class DdlHandler(BaseConverter):
             if type_name in type_map:
                 target_type_str = type_map[type_name]
 
+                # If spatial option not enabled, fallback SDO_GEOMETRY to BLOB
+                spatial_ok = self.behavior_config.get('spatial_option_enabled', True)
+                if not spatial_ok and target_type_str.upper() == 'SDO_GEOMETRY':
+                    target_type_str = 'BLOB'
+
                 # ---- Apply dynamic sizing rules ---------------------------------
 
                 dyn_rule = self.dynamic_rules.get(type_name)
@@ -172,7 +182,14 @@ class DdlHandler(BaseConverter):
                             size_literal = size_token.this.this
                         else:
                             size_literal = getattr(size_token, 'this', None)
-                        size_val = int(size_literal) if size_literal is not None else None
+                        size_val = None
+                        if size_literal is not None:
+                            try:
+                                size_val = int(size_literal)
+                            except (ValueError, TypeError):
+                                if str(size_literal).upper() == 'MAX':
+                                    # Treat MAX as larger than any configured max_size
+                                    size_val = dyn_rule.get('max_size', 4000) + 1
                         if size_val is not None:
                             if size_val > dyn_rule.get('max_size', 4000):
                                 target_type_str = dyn_rule.get('overflow_type', target_type_str)
@@ -357,6 +374,10 @@ class DdlHandler(BaseConverter):
                     column_comments.append((col_name, comment_text))
                 else:
                     new_constraints.append(constraint)
+                # Remove trailing dot from last constraint if present  
+                if new_constraints and isinstance(new_constraints[-1], exp.Dot):
+                    new_constraints.pop()
+
             column_def.set('constraints', new_constraints)
             
         if table_comment or column_comments:
@@ -502,3 +523,48 @@ class DdlHandler(BaseConverter):
             return {k.upper(): v for k, v in aliases.items()} if isinstance(aliases, dict) else {}
         except FileNotFoundError:
             return {}
+
+    # ---------------------------------------------------------------------
+    # Identifier quote stripping
+    # ---------------------------------------------------------------------
+    def _strip_identifier_quotes(self, ast: exp.Expression):
+        """Remove bracket/quoted identifiers when safe and configured.
+
+        This operates at the AST level so we avoid regex pre-processing and let
+        SQLGlot guarantee the resulting SQL is syntactically valid.
+
+        Rules (config-driven):
+        1. Only run when ``identifier_quote_stripping.enabled`` is True in
+           ``dialect_behaviors.json``.
+        2. If ``preserve_mixed_case`` is True we keep identifiers that are not
+           all-upper-case (to avoid breaking case-sensitive names).
+        3. We *never* strip quotes from identifiers that contain spaces,
+           non-standard characters, or leading digits – those require quoting
+           in Oracle.
+        """
+        cfg = self.behavior_config.get("identifier_quote_stripping", {})
+        if not cfg.get("enabled"):
+            return
+
+        preserve_mixed = cfg.get("preserve_mixed_case", False)
+
+        safe_pattern = re.compile(r"^[A-Za-z][A-Za-z0-9_]*$")
+
+        changed = 0
+        for ident in ast.find_all(exp.Identifier):
+            if not ident.args.get("quoted", False):
+                continue  # already unquoted
+
+            raw_name: str = ident.this  # text inside quotes / brackets
+
+            # Skip identifiers that should keep quotes
+            if (preserve_mixed and raw_name != raw_name.upper()) or not safe_pattern.fullmatch(raw_name):
+                continue
+
+            # Safe to strip – set quoted=False and uppercase to follow Oracle defaults
+            ident.set("quoted", False)
+            ident.set("this", raw_name.upper())
+            changed += 1
+
+        if changed:
+            self.logger.debug(f"Stripped quotes from {changed} identifiers in table definition.")

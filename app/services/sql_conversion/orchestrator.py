@@ -223,6 +223,15 @@ class ConversionOrchestrator:
     def _process_file(self, file_path: str, content: str, output_dir: str, overall_stats: dict) -> Dict:
         filename = os.path.basename(file_path)
         self.logger.info(f"Processing as regular SQL file: {filename}")
+
+        # --------------------------------------------------
+        # Optional: strip procedural BEGIN … END blocks before parsing
+        # --------------------------------------------------
+        try:
+            if self.behavior_config.get("strip_procedural_blocks", False):
+                content = self._strip_procedural_blocks(content)
+        except Exception as e:
+            self.logger.warning("Failed to strip procedural blocks in %s: %s", filename, e, exc_info=True)
         
         skip_patterns = self.behavior_config.get("statement_skipping", {}).get("patterns", [])
         statements, errors = self._parse_and_filter_statements(content, file_path, skip_patterns)
@@ -297,12 +306,24 @@ class ConversionOrchestrator:
         return final_output_dir
 
     def _write_converted_file(self, output_dir: str, original_file_path: str, statements: list[str]) -> str:
-        """Writes the converted SQL statements to a new file."""
+        """Writes the converted SQL statements to a new file and ensures every
+        statement – including the final one – is terminated with a semicolon."""
+
         filename = os.path.basename(original_file_path)
         output_path = os.path.join(output_dir, filename)
-        
+
+        joined_sql = ";\n\n".join(statements)
+        if not joined_sql.rstrip().endswith(';'):
+            joined_sql = f"{joined_sql.rstrip()} ;"  # append missing terminator
+
+        # Normalise line-endings and guarantee single trailing newline
+        joined_sql = joined_sql.replace('\r\n', '\n').replace('\r', '\n')
+        if not joined_sql.endswith('\n'):
+            joined_sql += '\n'
+
         with open(output_path, "w", encoding="utf-8") as f:
-            f.write(";\n\n".join(statements))
+            f.write(joined_sql)
+
         return output_path
 
     def orchestrate_sql_conversion(self, input_path: str, source_type: str, 
@@ -436,6 +457,7 @@ class ConversionOrchestrator:
         """
         try:
             content = read_file_content(file_path)
+
             if not content:
                 return self._create_file_error_result(file_path, "Could not read file", stats)
             
@@ -688,3 +710,31 @@ class ConversionOrchestrator:
             filtered.append(stmt)
 
         return filtered, []
+
+    # ------------------------------------------------------------------
+    # Procedural block stripper – generic (CREATE FUNCTION/PROCEDURE … END;)
+    # ------------------------------------------------------------------
+    @staticmethod
+    def _strip_procedural_blocks(sql_text: str) -> str:
+        begin_rx = re.compile(r"^\s*BEGIN\b", re.I)
+        end_rx   = re.compile(r"^\s*END\s*;?\s*$", re.I)
+
+        out_lines: list[str] = []
+        depth = 0  # track nested BEGIN … END pairs
+
+        for line in sql_text.splitlines():
+            # Enter a procedural block
+            if begin_rx.match(line):
+                depth += 1
+                continue  # strip the BEGIN line itself
+
+            # Exit the current block (only when depth > 0)
+            if depth and end_rx.match(line):
+                depth -= 1
+                continue  # strip the END line
+
+            # Keep the line only when we are **not** inside any block
+            if depth == 0:
+                out_lines.append(line)
+
+        return "\n".join(out_lines)

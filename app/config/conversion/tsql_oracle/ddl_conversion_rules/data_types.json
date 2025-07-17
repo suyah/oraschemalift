@@ -1,0 +1,80 @@
+{
+  "default": {
+    "VARCHAR": "VARCHAR2",
+    "NVARCHAR": "NVARCHAR2",
+    "CHAR": "CHAR",
+    "NCHAR": "NCHAR",
+    "TINYINT": "NUMBER(3,0)",
+    "UTINYINT": "NUMBER(3,0)",
+    "SMALLINT": "NUMBER(5,0)",
+    "INT": "NUMBER(10,0)",
+    "INTEGER": "NUMBER(10,0)",
+    "BIGINT": "NUMBER(19,0)",
+    "DECIMAL": "NUMBER",
+    "NUMERIC": "NUMBER",
+    "MONEY": "NUMBER(19,4)",
+    "SMALLMONEY": "NUMBER(10,4)",
+    "FLOAT": "BINARY_DOUBLE",
+    "REAL": "BINARY_FLOAT",
+    "DOUBLE": "BINARY_DOUBLE",
+    "DOUBLE PRECISION": "BINARY_DOUBLE",
+    "BIT": "NUMBER(1,0)",
+    "UNIQUEIDENTIFIER": "RAW(16)",
+    "UUID": "RAW(16)",
+    "ROWVERSION": "RAW(8)",
+    "XML": "XMLTYPE",
+    "BINARY": "RAW",
+    "VARBINARY": "BLOB",
+    "IMAGE": "BLOB",
+    "VARIANT": "CLOB",
+    "SQL_VARIANT": "JSON",
+    "TEXT": "CLOB",
+    "NTEXT": "CLOB",
+    "DATE": "DATE",
+    "TIME": "TIMESTAMP",
+    "DATETIME": "TIMESTAMP",
+    "SMALLDATETIME": "TIMESTAMP",
+    "DATETIME2": "TIMESTAMP",
+    "DATETIMEOFFSET": "TIMESTAMP WITH TIME ZONE",
+    "GEOGRAPHY": "SDO_GEOMETRY",
+    "GEOMETRY": "SDO_GEOMETRY",
+    "HIERARCHYID": "VARCHAR2(4000)"
+  },
+  "paramless_targets": [
+    "CLOB",
+    "BLOB",
+    "SDO_GEOMETRY",
+    "XMLTYPE",
+    "BOOLEAN",
+    "NCLOB",
+    "JSON"
+  ],
+  "dynamic_rules": {
+    "VARCHAR": {
+      "max_size": 4000,
+      "overflow_type": "CLOB",
+      "template": "VARCHAR2({size})"
+    },
+    "NVARCHAR": {
+      "max_size": 2000,
+      "overflow_type": "NCLOB",
+      "template": "NVARCHAR2({size})"
+    },
+    "VARBINARY": {
+      "max_size": 2000,
+      "overflow_type": "BLOB",
+      "template": "RAW({size})"
+    }
+  },
+  "version_overrides": {
+    "19c": {
+      "default": {
+        "SQL_VARIANT": "CLOB"
+      }
+    }
+  },
+  "output_aliases": {
+    "TIMESTAMPLTZ": "TIMESTAMP WITH LOCAL TIME ZONE",
+    "HIERARCHYID": "VARCHAR2(4000)"
+  }
+} 

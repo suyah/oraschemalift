@@ -84,13 +84,18 @@ def generate_testdata(data: Dict[str, Any] = Body(...)):
 @api_router.post('/db/test-connection')
 def test_connection(data: Dict[str, Any] = Body(...)):
     try:
-        result = db_service.test_connection(data)
+        # Accept either direct connection params or a saved profile reference
+        if data.get("connection"):
+            conn_payload = data["connection"]
+        elif data.get("connection_name"):
+            conn_payload, _ = _resolve_connection(data)
+        else:
+            return JSONResponse({'status':'error','message':'Provide either connection or connection_name'}, status_code=400)
+
+        result = db_service.test_connection(conn_payload)
         return JSONResponse(result)
     except Exception as e:
-        return JSONResponse({
-            'status': 'error',
-            'message': str(e)
-        }, status_code=400)
+        return JSONResponse({'status':'error','message': str(e)}, status_code=400)
 
 @api_router.post('/db/execute')
 def execute_sql(data: Dict[str, Any] = Body(...)):
@@ -101,12 +106,12 @@ def execute_sql(data: Dict[str, Any] = Body(...)):
                 'message': 'No data provided'
             }, status_code=400)
             
-        connection = data.get('connection')
-        if not connection:
-            return JSONResponse({
-                'status': 'error',
-                'message': 'Missing connection parameters'
-            }, status_code=400)
+        if data.get('connection'):
+            connection = data['connection']
+        elif data.get('connection_name'):
+            connection, _ = _resolve_connection(data)
+        else:
+            return JSONResponse({'status':'error','message':'Missing connection parameters (provide connection or connection_name)'}, status_code=400)
             
         input_path_type = data.get('input_path_type')
         input_path_config = data.get('input_path_config')
@@ -283,8 +288,11 @@ def convert_sql_endpoint(payload: Dict[str, Any] = Body(...)):
              return JSONResponse({'error': f'Constructed input path does not exist or is invalid: {actual_input_path}'}, status_code=404)
 
         # Create a new orchestrator instance for each request
+        from app.services.sql_conversion.utils.dialect_utils import get_sqlglot_dialect
+        resolved_source = get_sqlglot_dialect(db_type) or db_type
+
         orchestrator = ConversionOrchestrator(
-            source_dialect=db_type, 
+            source_dialect=resolved_source, 
             target_dialect=target_type,
             generate_cleanup=generate_cleanup
         )
@@ -403,12 +411,17 @@ def list_db_connections():
 @api_router.post('/db/connections')
 def save_db_connection(data: Dict[str, Any] = Body(...)):
     name = data.get('name')
-    payload = data.get('payload')
-    db_type = data.get('db_type')
-    if not all([name, payload, db_type]):
-        return JSONResponse({'error': 'name, db_type and payload required'}, status_code=400)
+    # Accept both 'connection' (preferred) and 'payload' (legacy)
+    conn_payload = data.get('connection')
+    db_type = (data.get('db_type') or (conn_payload or {}).get('db_type'))
+
+    if not name or not conn_payload:
+        return JSONResponse({'error': 'name and connection required'}, status_code=400)
+    if not db_type:
+        return JSONResponse({'error': 'db_type missing (either top-level or inside connection)'}, status_code=400)
+
     try:
-        _save_conn(name, db_type, payload)
+        _save_conn(name, db_type, conn_payload)
         return JSONResponse({'status': 'success'})
     except ValueError as ve:
         return JSONResponse({'error': str(ve)}, status_code=400)
@@ -483,6 +496,9 @@ def extract_db(payload: Dict[str, Any] = Body(...)):
     if db_type == "snowflake":
         from app.services.extractors import SnowflakeExtractor
         extractor = SnowflakeExtractor()
+    elif db_type == "sqlserver":
+        from app.services.extractors import SQLServerExtractor
+        extractor = SQLServerExtractor()
     else:
         return JSONResponse({"error": f"Unsupported db_type '{db_type}'"}, status_code=400)
 

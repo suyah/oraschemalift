@@ -27,6 +27,11 @@ try:
 except ImportError:  # pragma: no cover
     bigquery = None
 
+try:
+    import pyodbc  # type: ignore
+except ImportError:  # pragma: no cover – optional dependency
+    pyodbc = None
+
 logger = logging.getLogger(__name__)
 
 __all__ = ["get_connection"]
@@ -121,5 +126,25 @@ def get_connection(db_type: str, cfg: Dict[str, Any]):
             user=cfg["user"],
             password=cfg["password"],
         )
+
+    if db_type in ("sqlserver", "mssql", "sql_server"):
+        if pyodbc is None:
+            raise RuntimeError("pyodbc package is not installed")
+        # 'database' is optional; if omitted we connect to the default DB and the
+        # caller can switch later with a USE statement.
+        _require(["user", "password", "host"], cfg, "SQL Server")
+        port = cfg.get("port", 1433)
+        driver = cfg.get("driver", "ODBC Driver 18 for SQL Server")
+        server = f"{cfg['host']},{port}"
+        conn_str = (
+            f"DRIVER={{{driver}}};"
+            f"SERVER={server};"
+            f"UID={cfg['user']};"
+            f"PWD={cfg['password']};"
+            f"TrustServerCertificate=yes;"
+        )
+        if cfg.get("database"):
+            conn_str += f"DATABASE={cfg['database']};"
+        return pyodbc.connect(conn_str, autocommit=True)
 
     raise ValueError(f"Unsupported db_type '{db_type}' in connection_factory") 
