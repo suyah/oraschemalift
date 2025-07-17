@@ -1,0 +1,41 @@
+{
+  "statement_skipping": {
+    "enabled": true,
+    "patterns": [
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?DATABASE",
+      "^\\s*USE\\s+",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?FUNCTION",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?PROCEDURE",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?ROLE",
+      "^\\s*CREATE\\s+(?:OR\\s+REPLACE\\s+)?USER",
+      "^\\s*GRANT\\s+"
+    ]
+  },
+  "clause_removal": {
+    "enabled": true,
+    "clauses": [
+      "CLUSTER BY"
+    ]
+  },
+  "with_property_removal": {
+    "enabled": true,
+    "properties": [
+      "FILEGROUP",
+      "TEXTIMAGE_ON"
+    ]
+  },
+  "comment_conversion": {
+    "enabled": true,
+    "target_table_template": "COMMENT ON TABLE {table_name} IS '{comment_text}'",
+    "target_column_template": "COMMENT ON COLUMN {table_name}.{column_name} IS '{comment_text}'"
+  },
+  "virtual_column_conversion": {
+    "enabled": true
+  },
+  "identifier_quote_stripping": {
+    "enabled": true,
+    "preserve_mixed_case": false
+  },
+  "spatial_option_enabled": false,
+  "strip_procedural_blocks": true
+} 

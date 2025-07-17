@@ -46,9 +46,15 @@ class DBService:
                         continue
                     if query.upper().startswith('SELECT'):
                         cursor.execute(query)
-                        # Use column label from cursor.description which is reliable for all DBs
                         col_name = cursor.description[0][0].lower()
-                        val = cursor.fetchone()[0]
+                        rows = cursor.fetchall()
+                        if not rows:
+                            val = None
+                        elif len(rows) == 1:
+                            val = rows[0][0]
+                        else:
+                            # many rows but single column -> list
+                            val = [r[0] for r in rows]
                         results[col_name] = val
                     elif query.upper().startswith('SHOW') and self.db_type == 'snowflake':
                         cursor.execute(query)

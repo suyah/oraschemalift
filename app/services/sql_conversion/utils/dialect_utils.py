@@ -21,7 +21,8 @@ def get_sqlglot_dialect(source_type: str):
         'mysql': 'mysql', 
         'postgresql': 'postgres',
         'bigquery': 'bigquery',
-        'greenplum': None
+        'greenplum': None,
+        'sqlserver': 'tsql',
     }
     
     if source_type.lower() == 'greenplum':

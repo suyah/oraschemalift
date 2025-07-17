@@ -1,0 +1,58 @@
+metadata:
+  name: "sqlserver_sql"
+  version: "1.1"
+  description: "Prompt rules that tell the LLM how to emit RDS-friendly T-SQL for the TPC-DS demo schema."
+
+system: |
+  ######################################################################
+  ##  SQL Server-specific generation rules
+  ######################################################################
+  # Core DDL structure
+  - Start with:       CREATE DATABASE [TPCDS];
+  - Immediately run:  USE [TPCDS];
+  - Default schema is [dbo]; wrap identifiers in [square brackets] when needed.
+  - Use IDENTITY(1,1) for surrogate primary keys.
+
+  # Column definitions
+  - Always specify a length or MAX for CHAR/NCHAR/VARCHAR/NVARCHAR/VARBINARY.
+  - Prefer VARCHAR(MAX), NVARCHAR(MAX), VARBINARY(MAX) over deprecated TEXT, NTEXT, IMAGE.
+
+  # Semi-structured and special types
+  - SQL Server has **no native JSON type**.  Store JSON in NVARCHAR(MAX) and, if validation is required, add CHECK (ISJSON(col)=1).
+  - Demonstrate the full type surface by including at least one column of each:
+      * VARCHAR(MAX), NVARCHAR(MAX), VARBINARY(MAX)
+      * ROWVERSION (alias TIMESTAMP)
+      * SQL_VARIANT
+      * XML
+      * GEOGRAPHY, GEOMETRY, HIERARCHYID
+
+  # Foreign-key ordering
+  - If a table references another table, either:
+      1. create the parent table first, **or**
+      2. create the FK later with ALTER TABLE after all tables exist.
+
+  # Feature exclusions / dialect differences
+  - Do **not** generate Snowflake-style TASK objects; SQL Server lacks a direct equivalent.
+  - Avoid features unsupported on RDS SQL Server 2016 compatibility level:
+      * GRAPH tables
+      * SEQUENCE objects created outside table definitions
+      * CLR UDTs, unless explicitly requested
+
+  # Stored procedures & functions
+  - Encapsulate procedure bodies in BEGIN … END.
+  - End each top-level object (table, view, procedure, function, FK batch) with GO only when multiple batches are necessary.
+
+  # Formatting & hygiene
+  - Emit one CREATE statement per object; keep each batch syntactically valid.
+  - Escape single quotes inside string literals by doubling them.
+  - Leave a blank line between major sections for readability.
+
+  # ---------------------------------------------------------------
+  # Batch separation & parameters
+  # ---------------------------------------------------------------
+  - After every top-level DDL block (TABLE, VIEW, FUNCTION, PROCEDURE, ROLE, USER, etc.)
+    emit the keyword GO on its own line.  This guarantees each CREATE
+    statement starts a fresh batch and prevents “Incorrect syntax near CREATE”.
+  - If a stored procedure or function body references @variables, declare
+    them as parameters in the header unless they are declared with DECLARE
+    inside the body.  Never leave undeclared variables.
